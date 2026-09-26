@@ -1,4 +1,5 @@
 namespace UntisSentinel.Untis;
+
 public sealed class UntisClientException : System.Exception
 {
     public int? Code { get; }
