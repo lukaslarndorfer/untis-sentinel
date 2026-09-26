@@ -7,6 +7,7 @@ namespace UntisSentinel.Untis;
 
 public sealed class UntisClient
 {
+    private const int NotAuthenticatedCode = -8520;
     private readonly HttpClient _httpClient;
     private readonly UntisOptions _options;
     private readonly string _baseUrl;
@@ -53,7 +54,6 @@ public sealed class UntisClient
 
     public async Task<List<TimetableEntry>> GetTimetableAsync(DateOnly start, DateOnly end, CancellationToken cancellationToken)
     {
-
         AuthenticateResult auth = _authenticationState ?? await AuthenticateAsync(cancellationToken);
 
         TimetableElement element = new(auth.PersonId, auth.PersonType);
@@ -61,17 +61,12 @@ public sealed class UntisClient
         TimetableParams timetableParams = new(options);
         try
         {
-            var result = await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
-            return result;
+            return await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
         }
-        catch (UntisClientException ex) when (ex.Code == -8520) // not authenticated; session may have expired
+        catch (UntisClientException ex) when (ex.Code == NotAuthenticatedCode) // not authenticated; session may have expired
         {
             await AuthenticateAsync(cancellationToken);
-            var result = await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
-            return result;
+            return await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
         }
-
     }
-
-
 }
