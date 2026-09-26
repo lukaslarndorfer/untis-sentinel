@@ -19,7 +19,7 @@ public sealed class UntisClient
     {
         _httpClient = httpClient;
         _options = options.Value;
-        _baseUrl = $"https://{_options.Host}/WebUntis/jsonrpc.do?school={_options.School}";
+        _baseUrl = $"https://{_options.Host}/WebUntis/jsonrpc.do?school={Uri.EscapeDataString(_options.School)}";
     }
 
     private async Task<TResult> CallAsync<TParams, TResult>(string method, TParams parameters, CancellationToken cancellationToken)
