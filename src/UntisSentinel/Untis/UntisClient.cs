@@ -27,10 +27,7 @@ public sealed class UntisClient
         JsonRpcRequest<TParams> request = new("1", method, parameters);
 
         using HttpResponseMessage response =
-        await _httpClient.PostAsJsonAsync(_baseUrl,
-        request,
-        SerializerOptions,
-        cancellationToken);
+        await _httpClient.PostAsJsonAsync(_baseUrl, request, SerializerOptions, cancellationToken);
 
         // throws on 4xx or 5xx
         response.EnsureSuccessStatusCode();
@@ -42,7 +39,15 @@ public sealed class UntisClient
             throw new UntisClientException(content.Error.Code, content.Error.Message);
         }
 
-        return content.Result ?? throw new UntisClientException("No result nor error exist");
+        return content.Result ?? throw new UntisClientException("Response contained neither result nor error");
+    }
+
+    public async Task<AuthenticateResult> AuthenticateAsync(CancellationToken cancellationToken)
+    {
+        AuthenticateParams authenticateParams = new(_options.User, _options.Password, UntisOptions.ClientName);
+
+        AuthenticateResult result = await CallAsync<AuthenticateParams,AuthenticateResult>("authenticate", authenticateParams, cancellationToken);
+        return result;
     }
 }
 
