@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -11,6 +10,7 @@ public sealed class UntisClient
     private readonly HttpClient _httpClient;
     private readonly UntisOptions _options;
     private readonly string _baseUrl;
+    private AuthenticateResult? _authenticationState;
 
     // JsonSerializerDefaults.Web for camel case
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
@@ -46,8 +46,32 @@ public sealed class UntisClient
     {
         AuthenticateParams authenticateParams = new(_options.User, _options.Password, UntisOptions.ClientName);
 
-        AuthenticateResult result = await CallAsync<AuthenticateParams,AuthenticateResult>("authenticate", authenticateParams, cancellationToken);
+        AuthenticateResult result = await CallAsync<AuthenticateParams, AuthenticateResult>("authenticate", authenticateParams, cancellationToken);
+        _authenticationState = result;
         return result;
     }
-}
 
+    public async Task<List<TimetableEntry>> GetTimetableAsync(DateOnly start, DateOnly end, CancellationToken cancellationToken)
+    {
+
+        AuthenticateResult auth = _authenticationState ?? await AuthenticateAsync(cancellationToken);
+
+        TimetableElement element = new(auth.PersonId, auth.PersonType);
+        TimetableOptions options = new(element, start.ToUntisDate(), end.ToUntisDate());
+        TimetableParams timetableParams = new(options);
+        try
+        {
+            var result = await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
+            return result;
+        }
+        catch (UntisClientException ex) when (ex.Code == -8520) // not authenticated; session may have expired
+        {
+            await AuthenticateAsync(cancellationToken);
+            var result = await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
+            return result;
+        }
+
+    }
+
+
+}
