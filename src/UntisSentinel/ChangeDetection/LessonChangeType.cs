@@ -1,0 +1,10 @@
+namespace UntisSentinel.ChangeDetection;
+
+public enum LessonChangeType
+{
+    Cancelled,
+    CancellationWithdrawn,
+    TeacherSubstituted,
+    TeacherSubstitutionWithdrawn,
+    RoomChanged, // room changed back to original room = also room changed
+}
