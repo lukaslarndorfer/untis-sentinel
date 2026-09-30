@@ -8,14 +8,26 @@ public static class LessonChangeDetector
 {
     public static IReadOnlyList<LessonChange> DetectChanges(IReadOnlyList<Lesson> previous, IReadOnlyList<Lesson> current)
     {
+        if(previous.Count == 0)
+        {
+            return []; // no previous lessons, so we don't consider this a change (can be initial fetch)
+        }
+
         List<LessonChange> changes = [];
         var previousLessonsById = previous.ToDictionary(l => l.Id);
 
+        
+
+        var earliestDate = previous.Min(l => l.Date);
+        var latestDate = previous.Max(l => l.Date);
         foreach (Lesson lesson in current)
         {
             if (!previousLessonsById.TryGetValue(lesson.Id, out var prevLesson))
             {
-                    
+                if(lesson.Date <= latestDate && lesson.Date >= earliestDate)
+                {
+                    changes.Add(new LessonChange(LessonChangeType.LessonAdded, null, lesson));
+                }
             }
             else
             {
