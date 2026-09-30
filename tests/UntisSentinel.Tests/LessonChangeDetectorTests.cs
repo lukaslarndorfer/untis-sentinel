@@ -122,4 +122,77 @@ public class LessonChangeDetectorTests
 
         changes.Should().BeEmpty();
     }
+
+    [Fact]
+    public void DetectChanges_NewLessonWithinPreviousDateRange_ReturnsLessonAdded()
+    {
+        var first = TestLessons.Create();
+        var second = TestLessons.Create(id: 2); // same (default) date, different lesson
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([first], [first, second]);
+
+        var change = changes.Should().ContainSingle().Subject;
+        change.Type.Should().Be(LessonChangeType.LessonAdded);
+        change.Current.Should().BeSameAs(second);
+        change.Previous.Should().BeNull();
+    }
+
+    [Fact]
+    public void DetectChanges_NewLessonOutsidePreviousDateRange_ReturnsEmpty()
+    {
+        var first = TestLessons.Create(date: new DateOnly(2026, 9, 28));
+        var second = TestLessons.Create(id: 2, date: new DateOnly(2026, 9, 29));
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([first], [first, second]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_SubstitutionAlreadyPresent_ReturnsEmpty()
+    {
+        const int previousTeacherId = 2;
+        const int newTeacherId = 3;
+
+        var previous = TestLessons.Create(teachers: [newTeacherId], substitutedTeacherIds: [previousTeacherId]);
+        var current = TestLessons.Create(teachers: [newTeacherId], substitutedTeacherIds: [previousTeacherId]);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_SameRoomsInDifferentOrder_ReturnsEmpty()
+    {
+        const int roomA = 2;
+        const int roomB = 3;
+
+        var previous = TestLessons.Create(rooms: [roomA, roomB]);
+        var current = TestLessons.Create(rooms: [roomB, roomA]);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_MultipleLessonsOnlyOneChanged_ReturnsOnlyThatChange()
+    {
+        var previousFirst = TestLessons.Create(id: 1);
+        var previousSecond = TestLessons.Create(id: 2);
+        var previousThird = TestLessons.Create(id: 3);
+
+        var currentFirst = TestLessons.Create(id: 1);
+        var currentSecond = TestLessons.Create(id: 2, status: LessonStatus.Cancelled);
+        var currentThird = TestLessons.Create(id: 3);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.
+        DetectChanges([previousFirst, previousSecond, previousThird], [currentSecond, currentFirst, currentThird]);
+
+        var change = changes.Should().ContainSingle().Subject;
+        change.Type.Should().Be(LessonChangeType.Cancelled);
+        change.Previous.Should().BeSameAs(previousSecond);
+        change.Current.Should().BeSameAs(currentSecond);
+    }
 }
