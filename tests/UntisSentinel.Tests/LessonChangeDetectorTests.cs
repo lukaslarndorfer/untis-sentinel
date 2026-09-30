@@ -106,26 +106,20 @@ public class LessonChangeDetectorTests
 
         var previous = TestLessons.Create(rooms: [previousRoomId], teachers: [previousTeacherId]);
         var current = TestLessons.Create(rooms: [newRoomId], teachers: [newTeacherId], substitutedTeacherIds: [previousTeacherId]);
-        
+
         IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
 
         changes.Select(c => c.Type).Should().BeEquivalentTo(
         [LessonChangeType.RoomChanged, LessonChangeType.TeacherSubstituted]);
     }
 
-        [Fact]
-    public void DetectChanges_LessonOnlyInCurrent_ReturnsEmpty()
+    [Fact]
+    public void DetectChanges_PreviousEmpty_ReturnsEmpty()
     {
         var current = TestLessons.Create();
 
         IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([], [current]);
 
         changes.Should().BeEmpty();
-    } // decide: new lesson = no change?
-
-
-
-
-
-
+    }
 }

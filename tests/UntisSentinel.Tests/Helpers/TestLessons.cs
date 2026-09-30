@@ -9,10 +9,11 @@ internal static class TestLessons
         LessonStatus status = LessonStatus.Regular,
         IReadOnlyList<int>? teachers = null,
         IReadOnlyList<int>? rooms = null,
-        IReadOnlyList<int>? substitutedTeacherIds = null)
+        IReadOnlyList<int>? substitutedTeacherIds = null,
+        DateOnly? date = null)
         => new(
             Id: id,
-            Date: new DateOnly(2026, 9, 28),
+            Date: date ?? new DateOnly(2026, 9, 28),
             Start: new TimeOnly(8, 50),
             End: new TimeOnly(9, 40),
             Status: status,
