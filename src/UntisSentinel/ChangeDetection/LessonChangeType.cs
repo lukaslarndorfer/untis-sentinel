@@ -7,5 +7,6 @@ public enum LessonChangeType
     TeacherSubstituted,
     TeacherSubstitutionWithdrawn,
     RoomChanged, // room changed back to original room = also room changed
-    LessonAdded
+    LessonAdded,
+    BecameIrregular
 }
