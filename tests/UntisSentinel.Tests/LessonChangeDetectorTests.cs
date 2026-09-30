@@ -195,4 +195,109 @@ public class LessonChangeDetectorTests
         change.Previous.Should().BeSameAs(previousSecond);
         change.Current.Should().BeSameAs(currentSecond);
     }
+
+    [Fact]
+    public void DetectChanges_RegularToIrregular_ReturnsBecameIrregular()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Regular);
+        var current = TestLessons.Create(status: LessonStatus.Irregular);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        var change = changes.Should().ContainSingle().Subject;
+        change.Type.Should().Be(LessonChangeType.BecameIrregular);
+        change.Previous.Should().BeSameAs(previous);
+        change.Current.Should().BeSameAs(current);
+    }
+
+    [Fact]
+    public void DetectChanges_CancelledToIrregular_ReturnsBecameIrregularOnly()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Cancelled);
+        var current = TestLessons.Create(status: LessonStatus.Irregular);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        var change = changes.Should().ContainSingle().Subject;
+        change.Type.Should().Be(LessonChangeType.BecameIrregular);
+        change.Previous.Should().BeSameAs(previous);
+        change.Current.Should().BeSameAs(current);
+    }
+
+    [Fact]
+    public void DetectChanges_AlreadyIrregular_ReturnsEmpty()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Irregular);
+        var current = TestLessons.Create(status: LessonStatus.Irregular);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_IrregularToRegular_ReturnsEmpty()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Irregular);
+        var current = TestLessons.Create(status: LessonStatus.Regular);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_IrregularToCancelled_ReturnsCancelled()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Irregular);
+        var current = TestLessons.Create(status: LessonStatus.Cancelled);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().ContainSingle().Subject.Type.Should().Be(LessonChangeType.Cancelled);
+    }
+
+    [Fact]
+    public void DetectChanges_AlreadyCancelled_ReturnsEmpty()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Cancelled);
+        var current = TestLessons.Create(status: LessonStatus.Cancelled);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_RegularToUnknown_ReturnsEmpty()
+    {
+        var previous = TestLessons.Create();
+        var current = TestLessons.Create(status: LessonStatus.Unknown);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_CancelledToUnknown_ReturnsEmpty()
+    {
+        var previous = TestLessons.Create(status: LessonStatus.Cancelled);
+        var current = TestLessons.Create(status: LessonStatus.Unknown);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DetectChanges_NoRoomsOnBothSides_ReturnsEmpty()
+    {
+        var previous = TestLessons.Create(rooms: []);
+        var current = TestLessons.Create(rooms: []);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
 }
