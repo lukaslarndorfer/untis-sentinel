@@ -318,4 +318,19 @@ public class LessonChangeDetectorTests
         change.Previous.Should().BeSameAs(previous);
         change.Current.Should().BeSameAs(current);
     }
+
+    [Fact]
+    public void DetectChanges_TeacherSubstitutionChangedButSameTeachers_ReturnsEmpty()
+    {
+        const int previousTeacherId = 2;
+        const int newTeacherId = 3;
+        const int anotherNewTeacherId = 4;
+
+        var previous = TestLessons.Create(teachers: [newTeacherId, anotherNewTeacherId], substitutedTeacherIds: [previousTeacherId]);
+        var current = TestLessons.Create(teachers: [anotherNewTeacherId, newTeacherId], substitutedTeacherIds: [previousTeacherId]);
+
+        IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges([previous], [current]);
+
+        changes.Should().BeEmpty();
+    }
 }
