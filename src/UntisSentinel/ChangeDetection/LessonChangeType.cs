@@ -6,6 +6,7 @@ public enum LessonChangeType
     CancellationWithdrawn,
     TeacherSubstituted,
     TeacherSubstitutionWithdrawn,
+    TeacherSubstitutionChanged,
     RoomChanged, // room changed back to original room = also room changed
     LessonAdded,
     BecameIrregular

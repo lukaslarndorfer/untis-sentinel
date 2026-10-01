@@ -57,6 +57,11 @@ public static class LessonChangeDetector
         {
             yield return new LessonChange(LessonChangeType.TeacherSubstituted, previous, current);
         }
+        if (current.SubstitutedTeacherIds.Count > 0 && previous.SubstitutedTeacherIds.Count > 0
+        && !current.Teachers.Order().SequenceEqual(previous.Teachers.Order()))
+        {
+            yield return new LessonChange(LessonChangeType.TeacherSubstitutionChanged, previous, current);
+        }
         if (current.SubstitutedTeacherIds.Count == 0 && previous.SubstitutedTeacherIds.Count > 0)
         {
             yield return new LessonChange(LessonChangeType.TeacherSubstitutionWithdrawn, previous, current);
