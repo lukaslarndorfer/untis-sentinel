@@ -43,6 +43,20 @@ public sealed class UntisClient
         return content.Result ?? throw new UntisClientException("Response contained neither result nor error");
     }
 
+    private async Task<TResult> CallAuthenticatedAsync<TParams, TResult>(string method, TParams parameters, CancellationToken cancellationToken)
+    {
+        await EnsureAuthenticatedAsync(cancellationToken);
+        try
+        {
+            return await CallAsync<TParams, TResult>(method, parameters, cancellationToken);
+        }
+        catch (UntisClientException ex) when (ex.Code == NotAuthenticatedCode) // not authenticated; session may have expired
+        {
+            await AuthenticateAsync(cancellationToken);
+            return await CallAsync<TParams, TResult>(method, parameters, cancellationToken);
+        }
+    }
+
     public async Task<AuthenticateResult> AuthenticateAsync(CancellationToken cancellationToken)
     {
         AuthenticateParams authenticateParams = new(_options.User, _options.Password, UntisOptions.ClientName);
@@ -52,21 +66,16 @@ public sealed class UntisClient
         return result;
     }
 
+    private async Task<AuthenticateResult> EnsureAuthenticatedAsync(CancellationToken cancellationToken)
+         => _authenticationState ?? await AuthenticateAsync(cancellationToken);
+
     public async Task<List<TimetableEntry>> GetTimetableAsync(DateOnly start, DateOnly end, CancellationToken cancellationToken)
     {
-        AuthenticateResult auth = _authenticationState ?? await AuthenticateAsync(cancellationToken);
-
-        TimetableElement element = new(auth.PersonId, auth.PersonType);
+        AuthenticateResult authenticated = await EnsureAuthenticatedAsync(cancellationToken);
+        TimetableElement element = new(authenticated.PersonId, authenticated.PersonType);
         TimetableOptions options = new(element, start.ToUntisDate(), end.ToUntisDate());
         TimetableParams timetableParams = new(options);
-        try
-        {
-            return await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
-        }
-        catch (UntisClientException ex) when (ex.Code == NotAuthenticatedCode) // not authenticated; session may have expired
-        {
-            await AuthenticateAsync(cancellationToken);
-            return await CallAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
-        }
+
+        return await CallAuthenticatedAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
     }
 }
