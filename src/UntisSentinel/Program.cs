@@ -23,6 +23,8 @@ builder.Services.AddHttpClient<UntisClient>(http =>
     CookieContainer = cookieContainer
 });
 
+builder.Services.AddTransient<MasterDataLoader>();
+
 builder.Services.AddHostedService<Worker>();
 
 var host = builder.Build();
