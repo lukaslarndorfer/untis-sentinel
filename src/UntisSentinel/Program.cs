@@ -14,6 +14,12 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<PollingOptions>()
+    .BindConfiguration(PollingOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddHttpClient<UntisClient>()
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {
