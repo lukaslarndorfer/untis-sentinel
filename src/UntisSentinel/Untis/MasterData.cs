@@ -19,4 +19,11 @@ public class MasterData
         _rooms = rooms.ToFrozenDictionary(r => r.Id);
     }
 
+    public SchoolClass? GetSchoolClassById(int id) => _classes.GetValueOrDefault(id);
+    public Teacher? GetTeacherById(int id) => _teachers.GetValueOrDefault(id);
+    public Subject? GetSubjectById(int id) => _subjects.GetValueOrDefault(id);
+    public Room? GetRoomById(int id) => _rooms.GetValueOrDefault(id);
+
+
+
 }
