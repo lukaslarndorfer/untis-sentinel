@@ -15,6 +15,7 @@ public sealed class UntisClient
 
     // JsonSerializerDefaults.Web for camel case
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+    private static readonly EmptyParams NoParams = new();
 
     public UntisClient(HttpClient httpClient, IOptions<UntisOptions> options)
     {
@@ -78,4 +79,16 @@ public sealed class UntisClient
 
         return await CallAuthenticatedAsync<TimetableParams, List<TimetableEntry>>("getTimetable", timetableParams, cancellationToken);
     }
+
+    public Task<List<SchoolClass>> GetSchoolClassesAsync(CancellationToken cancellationToken)
+        => CallAuthenticatedAsync<EmptyParams, List<SchoolClass>>("getKlassen", NoParams, cancellationToken);
+
+    public Task<List<Teacher>> GetTeachersAsync(CancellationToken cancellationToken)
+        => CallAuthenticatedAsync<EmptyParams, List<Teacher>>("getTeachers", NoParams, cancellationToken);
+
+    public Task<List<Subject>> GetSubjectsAsync(CancellationToken cancellationToken)
+        => CallAuthenticatedAsync<EmptyParams, List<Subject>>("getSubjects", NoParams, cancellationToken);
+
+    public Task<List<Room>> GetRoomsAsync(CancellationToken cancellationToken)
+        => CallAuthenticatedAsync<EmptyParams, List<Room>>("getRooms", NoParams, cancellationToken);
 }
