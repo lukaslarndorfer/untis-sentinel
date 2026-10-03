@@ -14,14 +14,13 @@ builder.Services
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder.Services.AddHttpClient<UntisClient>(http =>
-{
-    http.Timeout = TimeSpan.FromSeconds(30);
-}).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-{
-    UseCookies = true,
-    CookieContainer = cookieContainer
-});
+builder.Services.AddHttpClient<UntisClient>()
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        UseCookies = true,
+        CookieContainer = cookieContainer
+    })
+    .AddStandardResilienceHandler();
 
 builder.Services.AddTransient<MasterDataLoader>();
 
