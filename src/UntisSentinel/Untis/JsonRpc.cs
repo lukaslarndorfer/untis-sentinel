@@ -22,3 +22,5 @@ public sealed record JsonRpcResponse<TResult>(
     JsonRpcError? Error,
     [property: JsonPropertyName("jsonrpc")] string JsonRpcVersion = "2.0"
 );
+
+public sealed record EmptyParams();
