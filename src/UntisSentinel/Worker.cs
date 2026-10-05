@@ -1,19 +1,23 @@
+using Microsoft.Extensions.Options;
+
 using UntisSentinel.Untis;
 
 namespace UntisSentinel;
 
-public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader) : BackgroundService
+public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader, IOptions<PollingOptions> options) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         MasterData masterData = await masterDataLoader.LoadAsync(stoppingToken);
-        while (!stoppingToken.IsCancellationRequested)
+
+        // periodic timer ticks at a fixed rate, so the run time doesn't add to the interval (no drift like Task.Delay has)
+        using PeriodicTimer timer = new(options.Value.Interval);
+
+        // first run right away, then every interval
+        do
         {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            }
-            await Task.Delay(1000, stoppingToken);
-        }
+            logger.LogInformation("Polling Timetable...");
+
+        } while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 }
