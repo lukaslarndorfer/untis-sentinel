@@ -16,8 +16,19 @@ public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader, I
         // first run right away, then every interval
         do
         {
-            logger.LogInformation("Polling Timetable...");
-
+            await PollOnceAsync(stoppingToken);
         } while (await timer.WaitForNextTickAsync(stoppingToken));
+    }
+
+    private async Task PollOnceAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            logger.LogInformation("Polling Timetable...");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or UntisClientException) // expected network/API errors, fatal exceptions should still stop execution
+        {
+            logger.LogError(ex, "Failed to poll timetable, skipping this iteration");
+        }
     }
 }
