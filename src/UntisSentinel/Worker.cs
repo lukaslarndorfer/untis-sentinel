@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 
+using Polly.Timeout;
+
 using UntisSentinel.Untis;
 
 namespace UntisSentinel;
@@ -26,7 +28,7 @@ public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader, I
         {
             logger.LogInformation("Polling Timetable...");
         }
-        catch (Exception ex) when (ex is HttpRequestException or UntisClientException) // expected network/API errors, fatal exceptions should still stop execution
+        catch (Exception ex) when (ex is HttpRequestException or UntisClientException or TimeoutRejectedException) // unexpected errors should still stop execution
         {
             logger.LogError(ex, "Failed to poll timetable, skipping this iteration");
         }
