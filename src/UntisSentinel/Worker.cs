@@ -2,18 +2,22 @@ using Microsoft.Extensions.Options;
 
 using Polly.Timeout;
 
+using UntisSentinel.ChangeDetection;
+using UntisSentinel.Timetable;
 using UntisSentinel.Untis;
 
 namespace UntisSentinel;
 
-public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader, IOptions<PollingOptions> options) : BackgroundService
+public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader, IOptions<PollingOptions> pollingOptions, UntisClient client) : BackgroundService
 {
+    private List<Lesson> _previousLessons = [];
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         MasterData masterData = await masterDataLoader.LoadAsync(stoppingToken);
 
         // periodic timer ticks at a fixed rate, so the run time doesn't add to the interval (no drift like Task.Delay has)
-        using PeriodicTimer timer = new(options.Value.Interval);
+        using PeriodicTimer timer = new(pollingOptions.Value.Interval);
 
         // first run right away, then every interval
         do
@@ -26,7 +30,26 @@ public class Worker(ILogger<Worker> logger, MasterDataLoader masterDataLoader, I
     {
         try
         {
-            logger.LogInformation("Polling Timetable...");
+            DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+            DateOnly start = today;
+            DateOnly end = today.AddDays(pollingOptions.Value.DaysToFetch - 1);
+
+            List<TimetableEntry> entries = await client.GetTimetableAsync(start, end, cancellationToken);
+            List<Lesson> current = [.. entries.Select(tte => tte.ToLesson())];
+
+            logger.LogInformation("Received {Count} lessons", current.Count);
+
+            IReadOnlyList<LessonChange> changes = LessonChangeDetector.DetectChanges(_previousLessons, current);
+            foreach (LessonChange change in changes)
+            {
+                logger.LogInformation(
+                    "Detected {ChangeType} for lesson {LessonId} on {Date} at {Start}",
+                    change.Type,
+                    change.Current.Id,
+                    change.Current.Date,
+                    change.Current.Start);
+            }
+            _previousLessons = current;
         }
         catch (Exception ex) when (ex is HttpRequestException or UntisClientException or TimeoutRejectedException) // unexpected errors should still stop execution
         {
