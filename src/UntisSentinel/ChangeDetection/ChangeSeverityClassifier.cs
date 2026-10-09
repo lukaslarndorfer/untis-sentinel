@@ -2,10 +2,10 @@ namespace UntisSentinel.ChangeDetection;
 
 public static class ChangeSeverityClassifier
 {
-    public static NotificationSeverity Classify(LessonChange change, DateTime now)
+    public static NotificationSeverity Classify(LessonChange change, TimeProvider timeProvider)
     {
+        DateTime now = timeProvider.GetLocalNow().DateTime;
         DateTime start = change.Current.Date.ToDateTime(change.Current.Start);
-
         if (start > now && start < now.AddHours(24) && IsPingType(change.Type))
         {
             return NotificationSeverity.Ping;
@@ -17,15 +17,15 @@ public static class ChangeSeverityClassifier
     {
         return changeType switch
         {
-            LessonChangeType.Cancelled => true,
-            LessonChangeType.CancellationWithdrawn => true,
-            LessonChangeType.TeacherSubstituted => true,
-            LessonChangeType.TeacherSubstitutionWithdrawn => false,
-            LessonChangeType.TeacherSubstitutionChanged => true,
-            LessonChangeType.RoomChanged => true,
-            LessonChangeType.LessonAdded => true,
-            LessonChangeType.BecameIrregular => true,
-            _ => false
+            LessonChangeType.Cancelled
+            or LessonChangeType.CancellationWithdrawn
+            or LessonChangeType.TeacherSubstituted
+            or LessonChangeType.TeacherSubstitutionWithdrawn
+            or LessonChangeType.RoomChanged
+            or LessonChangeType.LessonAdded
+            or LessonChangeType.BecameIrregular => true,
+            LessonChangeType.TeacherSubstitutionChanged => false,
+            _ => throw new ArgumentOutOfRangeException(nameof(changeType), changeType, "Enum Value is not classified"),
         };
     }
 
