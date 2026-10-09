@@ -6,7 +6,8 @@ public static class ChangeSeverityClassifier
     {
         DateTime now = timeProvider.GetLocalNow().DateTime;
         DateTime start = change.Current.Date.ToDateTime(change.Current.Start);
-        if (start > now && start < now.AddHours(24) && IsPingType(change.Type))
+        DateTime end = change.Current.Date.ToDateTime(change.Current.End);
+        if (now < end && start < now.AddDays(1) && IsPingType(change.Type))
         {
             return NotificationSeverity.Ping;
         }
